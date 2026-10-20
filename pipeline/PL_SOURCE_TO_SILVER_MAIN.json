@@ -48,6 +48,7 @@
 						"value": "@activity('READ_SOURCE_TABLES_LIST').output.value",
 						"type": "Expression"
 					},
+					"isSequential": false,
 					"activities": [
 						{
 							"name": "Ingest from Source to Silver",
@@ -99,7 +100,7 @@
 									{
 										"type": "Query",
 										"text": {
-											"value": "INSERT INTO ctrl.audit_log(adf_run_id, table_id, stage, status, start_time)\nvalues\n('a1',@{item().table_id},'SOURCE_TO_SILVER','IN_PROGRESS',SYSUTCDATETIME())",
+											"value": "INSERT INTO ctrl.audit_log(adf_run_id, table_id, stage, status, start_time)\nvalues\n('@{pipeline().parameters.adf_run_id}',@{item().table_id},'SOURCE_TO_SILVER','IN_PROGRESS',SYSUTCDATETIME())",
 											"type": "Expression"
 										}
 									}
@@ -114,7 +115,7 @@
 								{
 									"activity": "Ingest from Source to Silver",
 									"dependencyConditions": [
-										"Succeeded"
+										"Failed"
 									]
 								}
 							],
@@ -135,7 +136,7 @@
 									{
 										"type": "Query",
 										"text": {
-											"value": "Update ctrl.audit_log(adf_run_id, table_id, stage, status, start_time)\nvalues\n('a1',@{item().table_id},'SOURCE_TO_SILVER','IN_PROGRESS',SYSUTCDATETIME())",
+											"value": "Update ctrl.audit_log set status = 'FAILED',\nend_time=SYSUTCDATETIME()\nwhere adf_run_id = '@{pipeline().parameters.adf_run_id}'\nand table_id = @{item().table_id}",
 											"type": "Expression"
 										}
 									}
@@ -151,6 +152,10 @@
 			"source_system": {
 				"type": "string",
 				"defaultValue": "neon_postgres"
+			},
+			"adf_run_id": {
+				"type": "string",
+				"defaultValue": "a3"
 			}
 		},
 		"variables": {
